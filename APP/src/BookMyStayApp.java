@@ -779,4 +779,104 @@ public class UseCase7AddOnServiceSelection {
 
         System.out.println("\nNote: Booking & inventory remain unchanged.");
     }
+}import java.util.ArrayList;
+import java.util.List;
+
+// Reservation class representing a confirmed booking
+class Reservation {
+    private int reservationId;
+    private String guestName;
+    private String roomType;
+    private int nights;
+
+    public Reservation(int reservationId, String guestName, String roomType, int nights) {
+        this.reservationId = reservationId;
+        this.guestName = guestName;
+        this.roomType = roomType;
+        this.nights = nights;
+    }
+
+    public int getReservationId() {
+        return reservationId;
+    }
+
+    public String getGuestName() {
+        return guestName;
+    }
+
+    public String getRoomType() {
+        return roomType;
+    }
+
+    public int getNights() {
+        return nights;
+    }
+
+    @Override
+    public String toString() {
+        return "Reservation ID: " + reservationId +
+                ", Guest: " + guestName +
+                ", Room Type: " + roomType +
+                ", Nights: " + nights;
+    }
+}
+
+// BookingHistory class to store confirmed reservations
+class BookingHistory {
+    private List<Reservation> reservations;
+
+    public BookingHistory() {
+        reservations = new ArrayList<>();
+    }
+
+    // Add confirmed reservation to history
+    public void addReservation(Reservation reservation) {
+        reservations.add(reservation);
+    }
+
+    // Retrieve all reservations
+    public List<Reservation> getAllReservations() {
+        return new ArrayList<>(reservations); // Return a copy to avoid modification
+    }
+}
+
+// BookingReportService class to generate reports
+class BookingReportService {
+    private BookingHistory history;
+
+    public BookingReportService(BookingHistory history) {
+        this.history = history;
+    }
+
+    // Generate a summary report
+    public void generateReport() {
+        List<Reservation> allReservations = history.getAllReservations();
+        System.out.println("===== Booking History Report =====");
+        if (allReservations.isEmpty()) {
+            System.out.println("No bookings found.");
+        } else {
+            for (Reservation r : allReservations) {
+                System.out.println(r);
+            }
+        }
+        System.out.println("Total Reservations: " + allReservations.size());
+        System.out.println("=================================");
+    }
+}
+
+// Main class to demonstrate Use Case 8
+public class UseCase8BookingHistoryReport {
+    public static void main(String[] args) {
+        // Create booking history
+        BookingHistory history = new BookingHistory();
+
+        // Simulate confirmed bookings
+        history.addReservation(new Reservation(101, "Alice Johnson", "Deluxe", 3));
+        history.addReservation(new Reservation(102, "Bob Smith", "Standard", 2));
+        history.addReservation(new Reservation(103, "Charlie Brown", "Suite", 5));
+
+        // Admin generates booking report
+        BookingReportService reportService = new BookingReportService(history);
+        reportService.generateReport();
+    }
 }
