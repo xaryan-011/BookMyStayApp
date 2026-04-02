@@ -1125,4 +1125,98 @@ public class UseCase10BookingCancellation {
 
         scanner.close();
     }
+}import java.util.*;
+        import java.util.concurrent.*;
+
+// Custom Exception for invalid bookings
+class InvalidBookingException extends Exception {
+    public InvalidBookingException(String message) {
+        super(message);
+    }
+}
+
+// Enum for room types
+enum RoomType {
+    SINGLE, DOUBLE, SUITE
+}
+
+// Hotel class with thread-safe inventory management
+class Hotel {
+    private Map<RoomType, Integer> roomInventory = new EnumMap<>(RoomType.class);
+
+    public Hotel() {
+        roomInventory.put(RoomType.SINGLE, 5);
+        roomInventory.put(RoomType.DOUBLE, 3);
+        roomInventory.put(RoomType.SUITE, 2);
+    }
+
+    // Thread-safe booking method
+    public synchronized void bookRoom(String guestName, RoomType type) throws InvalidBookingException {
+        int available = roomInventory.getOrDefault(type, 0);
+        if (available <= 0) {
+            throw new InvalidBookingException("No " + type + " rooms available for " + guestName);
+        }
+        roomInventory.put(type, available - 1);
+        System.out.println("Booking confirmed: " + guestName + " booked a " + type + " room. Remaining: " + (available - 1));
+    }
+
+    public synchronized void displayInventory() {
+        System.out.println("Current Room Inventory:");
+        for (Map.Entry<RoomType, Integer> entry : roomInventory.entrySet()) {
+            System.out.println(entry.getKey() + ": " + entry.getValue());
+        }
+    }
+}
+
+// Runnable task representing a guest booking
+class BookingTask implements Runnable {
+    private String guestName;
+    private RoomType roomType;
+    private Hotel hotel;
+
+    public BookingTask(String guestName, RoomType roomType, Hotel hotel) {
+        this.guestName = guestName;
+        this.roomType = roomType;
+        this.hotel = hotel;
+    }
+
+    @Override
+    public void run() {
+        try {
+            hotel.bookRoom(guestName, roomType);
+        } catch (InvalidBookingException e) {
+            System.out.println("Booking failed: " + e.getMessage());
+        }
+    }
+}
+
+// Main simulation class
+public class UseCase11ConcurrentBookingSimulation {
+    public static void main(String[] args) throws InterruptedException {
+        Hotel hotel = new Hotel();
+        ExecutorService executor = Executors.newFixedThreadPool(5);
+
+        // Simulate multiple guests trying to book rooms concurrently
+        List<BookingTask> tasks = Arrays.asList(
+                new BookingTask("Alice", RoomType.SINGLE, hotel),
+                new BookingTask("Bob", RoomType.SINGLE, hotel),
+                new BookingTask("Charlie", RoomType.DOUBLE, hotel),
+                new BookingTask("Diana", RoomType.SUITE, hotel),
+                new BookingTask("Ethan", RoomType.SINGLE, hotel),
+                new BookingTask("Fiona", RoomType.DOUBLE, hotel),
+                new BookingTask("George", RoomType.SUITE, hotel),
+                new BookingTask("Hannah", RoomType.SINGLE, hotel)
+        );
+
+        // Submit tasks to executor
+        for (BookingTask task : tasks) {
+            executor.submit(task);
+        }
+
+        executor.shutdown();
+        executor.awaitTermination(10, TimeUnit.SECONDS);
+
+        System.out.println("\nFinal Room Inventory:");
+        hotel.displayInventory();
+    }
 }
