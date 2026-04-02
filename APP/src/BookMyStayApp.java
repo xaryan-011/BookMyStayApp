@@ -232,3 +232,136 @@ public class UseCase3InventorySetup {
         System.out.println("\nApplication terminated successfully.");
     }
 }
+/**
+ * Abstract Room class representing room details
+ */
+abstract class Room {
+    protected String roomType;
+    protected int beds;
+    protected double price;
+
+    public Room(String roomType, int beds, double price) {
+        this.roomType = roomType;
+        this.beds = beds;
+        this.price = price;
+    }
+
+    public String getRoomType() {
+        return roomType;
+    }
+
+    public abstract void displayDetails();
+}
+class SingleRoom extends Room {
+    public SingleRoom() {
+        super("Single Room", 1, 1000);
+    }
+
+    public void displayDetails() {
+        System.out.println(roomType + " | Beds: " + beds + " | Price: ₹" + price);
+    }
+}
+
+class DoubleRoom extends Room {
+    public DoubleRoom() {
+        super("Double Room", 2, 1800);
+    }
+
+    public void displayDetails() {
+        System.out.println(roomType + " | Beds: " + beds + " | Price: ₹" + price);
+    }
+}
+
+class SuiteRoom extends Room {
+    public SuiteRoom() {
+        super("Suite Room", 3, 3000);
+    }
+
+    public void displayDetails() {
+        System.out.println(roomType + " | Beds: " + beds + " | Price: ₹" + price);
+    }
+}
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Centralized inventory (same concept as Use Case 3)
+ */
+class RoomInventory {
+
+    private Map<String, Integer> inventory = new HashMap<>();
+
+    public RoomInventory() {
+        inventory.put("Single Room", 5);
+        inventory.put("Double Room", 0); // intentionally unavailable
+        inventory.put("Suite Room", 2);
+    }
+
+    public int getAvailability(String roomType) {
+        return inventory.getOrDefault(roomType, 0);
+    }
+}
+/**
+ * SearchService handles room search (read-only)
+ */
+class SearchService {
+
+    private RoomInventory inventory;
+
+    public SearchService(RoomInventory inventory) {
+        this.inventory = inventory;
+    }
+
+    public void searchAvailableRooms(Room[] rooms) {
+
+        System.out.println("---- Available Rooms ----\n");
+
+        for (Room room : rooms) {
+
+            int available = inventory.getAvailability(room.getRoomType());
+
+            // Validation: show only available rooms
+            if (available > 0) {
+                room.displayDetails();
+                System.out.println("Available: " + available + "\n");
+            }
+        }
+    }
+}
+/**
+ * UseCase4RoomSearch
+ *
+ * Demonstrates read-only room search using inventory
+ * without modifying system state.
+ *
+ * @author Aryan
+ * @version 4.0
+ */
+public class UseCase4RoomSearch {
+
+    public static void main(String[] args) {
+
+        System.out.println("=====================================");
+        System.out.println("   Welcome to Book My Stay App");
+        System.out.println("   Hotel Booking System v4.0");
+        System.out.println("=====================================\n");
+
+        // Initialize inventory
+        RoomInventory inventory = new RoomInventory();
+
+        // Create room objects
+        Room[] rooms = {
+                new SingleRoom(),
+                new DoubleRoom(),
+                new SuiteRoom()
+        };
+
+        // Search service (read-only)
+        SearchService searchService = new SearchService(inventory);
+
+        // Perform search
+        searchService.searchAvailableRooms(rooms);
+
+        System.out.println("Search completed. No changes made to inventory.");
+    }
+}
