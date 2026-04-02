@@ -879,4 +879,89 @@ public class UseCase8BookingHistoryReport {
         BookingReportService reportService = new BookingReportService(history);
         reportService.generateReport();
     }
+}import java.util.*;
+
+// Custom Exception for invalid bookings
+class InvalidBookingException extends Exception {
+    public InvalidBookingException(String message) {
+        super(message);
+    }
+}
+
+// Enum for room types
+enum RoomType {
+    SINGLE, DOUBLE, SUITE
+}
+
+// Hotel class with inventory management
+class Hotel {
+    private Map<RoomType, Integer> roomInventory = new HashMap<>();
+
+    public Hotel() {
+        // Initial inventory
+        roomInventory.put(RoomType.SINGLE, 5);
+        roomInventory.put(RoomType.DOUBLE, 3);
+        roomInventory.put(RoomType.SUITE, 2);
+    }
+
+    public void bookRoom(RoomType type) throws InvalidBookingException {
+        if (!roomInventory.containsKey(type)) {
+            throw new InvalidBookingException("Room type " + type + " does not exist.");
+        }
+
+        int available = roomInventory.get(type);
+        if (available <= 0) {
+            throw new InvalidBookingException("No " + type + " rooms available.");
+        }
+
+        roomInventory.put(type, available - 1); // Update inventory
+        System.out.println("Booking confirmed for a " + type + " room. Remaining: " + (available - 1));
+    }
+
+    public void displayInventory() {
+        System.out.println("Current Room Inventory:");
+        for (Map.Entry<RoomType, Integer> entry : roomInventory.entrySet()) {
+            System.out.println(entry.getKey() + ": " + entry.getValue());
+        }
+    }
+}
+
+// Main program to handle user input and booking
+public class UseCase9ErrorHandlingValidation {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        Hotel hotel = new Hotel();
+        boolean continueBooking = true;
+
+        System.out.println("Welcome to Book My Stay App");
+
+        while (continueBooking) {
+            hotel.displayInventory();
+
+            System.out.println("Enter room type to book (SINGLE, DOUBLE, SUITE) or QUIT to exit:");
+            String input = scanner.nextLine().trim().toUpperCase();
+
+            if (input.equals("QUIT")) {
+                continueBooking = false;
+                System.out.println("Thank you for using Book My Stay App!");
+                break;
+            }
+
+            try {
+                // Validate and book room
+                RoomType roomType = RoomType.valueOf(input); // This throws IllegalArgumentException for invalid input
+                hotel.bookRoom(roomType);
+            } catch (IllegalArgumentException e) {
+                System.out.println("Error: Invalid room type entered.");
+            } catch (InvalidBookingException e) {
+                System.out.println("Booking failed: " + e.getMessage());
+            } catch (Exception e) {
+                System.out.println("An unexpected error occurred: " + e.getMessage());
+            }
+
+            System.out.println(); // Blank line for readability
+        }
+
+        scanner.close();
+    }
 }
