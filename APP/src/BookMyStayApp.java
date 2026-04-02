@@ -365,3 +365,139 @@ public class UseCase4RoomSearch {
         System.out.println("Search completed. No changes made to inventory.");
     }
 }
+/**
+ * Reservation
+ *
+ * Represents a guest booking request.
+ * Contains guest name and requested room type.
+ *
+ * @author Aryan
+ * @version 5.0
+ */
+class Reservation {
+
+    private String guestName;
+    private String roomType;
+
+    public Reservation(String guestName, String roomType) {
+        this.guestName = guestName;
+        this.roomType = roomType;
+    }
+
+    public String getGuestName() {
+        return guestName;
+    }
+
+    public String getRoomType() {
+        return roomType;
+    }
+
+    public void displayRequest() {
+        System.out.println("Guest: " + guestName + " | Requested Room: " + roomType);
+    }
+}import java.util.LinkedList;
+import java.util.Queue;
+
+/**
+ * BookingRequestQueue
+ *
+ * Manages incoming booking requests using FIFO Queue.
+ * Ensures fairness (First-Come-First-Served).
+ *
+ * @author Aryan
+ * @version 5.0
+ */
+class BookingRequestQueue {
+
+    private Queue<Reservation> queue;
+
+    public BookingRequestQueue() {
+        queue = new LinkedList<>();
+    }
+
+    // Add booking request
+    public void addRequest(Reservation reservation) {
+        queue.offer(reservation);
+        System.out.println("Request added for " + reservation.getGuestName());
+    }
+
+    // View all requests (without removing)
+    public void displayAllRequests() {
+        System.out.println("\n---- Booking Requests Queue ----");
+
+        if (queue.isEmpty()) {
+            System.out.println("No booking requests available.");
+            return;
+        }
+
+        for (Reservation r : queue) {
+            r.displayRequest();
+        }
+    }
+}/**
+ * UseCase5BookingRequestQueue
+ *
+ * Demonstrates FIFO booking request handling using Queue.
+ * No inventory updates are performed here.
+ *
+ * @author Aryan
+ * @version 5.1
+ */
+public class UseCase5BookingRequestQueue {
+
+    public static void main(String[] args) {
+
+        System.out.println("=====================================");
+        System.out.println("   Welcome to Book My Stay App");
+        System.out.println("   Hotel Booking System v5.1");
+        System.out.println("=====================================\n");
+
+        // Initialize booking queue
+        BookingRequestQueue bookingQueue = new BookingRequestQueue();
+
+        // Simulate booking requests
+        bookingQueue.addRequest(new Reservation("Aryan", "Single Room"));
+        bookingQueue.addRequest(new Reservation("Neha", "Double Room"));
+        bookingQueue.addRequest(new Reservation("Rahul", "Suite Room"));
+        bookingQueue.addRequest(new Reservation("Sneha", "Single Room"));
+
+        // Display queue (FIFO order)
+        bookingQueue.displayAllRequests();
+
+        System.out.println("\nAll requests are stored in arrival order (FIFO).");
+        System.out.println("No inventory changes performed.");
+    }
+}/**
+ * UseCase5BookingRequestQueue
+ *
+ * Demonstrates FIFO booking request handling using Queue.
+ * No inventory updates are performed here.
+ *
+ * @author Aryan
+ * @version 5.1
+ */
+public class UseCase5BookingRequestQueue {
+
+    public static void main(String[] args) {
+
+        System.out.println("=====================================");
+        System.out.println("   Welcome to Book My Stay App");
+        System.out.println("   Hotel Booking System v5.1");
+        System.out.println("=====================================\n");
+
+        // Initialize booking queue
+        BookingRequestQueue bookingQueue = new BookingRequestQueue();
+
+        // Simulate booking requests
+        bookingQueue.addRequest(new Reservation("Aryan", "Single Room"));
+        bookingQueue.addRequest(new Reservation("Neha", "Double Room"));
+        bookingQueue.addRequest(new Reservation("Rahul", "Suite Room"));
+        bookingQueue.addRequest(new Reservation("Sneha", "Single Room"));
+
+        // Display queue (FIFO order)
+        bookingQueue.displayAllRequests();
+
+        System.out.println("\nAll requests are stored in arrival order (FIFO).");
+        System.out.println("No inventory changes performed.");
+    }
+}
