@@ -1219,4 +1219,180 @@ public class UseCase11ConcurrentBookingSimulation {
         System.out.println("\nFinal Room Inventory:");
         hotel.displayInventory();
     }
+}import java.io.*;
+        import java.util.*;
+
+// Custom Exception for invalid bookings
+class InvalidBookingException extends Exception {
+    public InvalidBookingException(String message) {
+        super(message);
+    }
+}
+
+// Enum for room types
+enum RoomType {
+    SINGLE, DOUBLE, SUITE
+}
+
+// Booking class with Serializable for persistence
+class Booking implements Serializable {
+    private static final long serialVersionUID = 1L;
+    String guestName;
+    RoomType roomType;
+    String roomId;
+
+    public Booking(String guestName, RoomType roomType, String roomId) {
+        this.guestName = guestName;
+        this.roomType = roomType;
+        this.roomId = roomId;
+    }
+
+    @Override
+    public String toString() {
+        return guestName + " - " + roomType + " (" + roomId + ")";
+    }
+}
+
+// Hotel class with inventory and booking management
+class Hotel implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private Map<RoomType, Integer> roomInventory = new EnumMap<>(RoomType.class);
+    private Map<RoomType, Stack<String>> availableRoomIds = new EnumMap<>(RoomType.class);
+    private List<Booking> bookings = new ArrayList<>();
+
+    public Hotel() {
+        // Default inventory
+        roomInventory.put(RoomType.SINGLE, 5);
+        roomInventory.put(RoomType.DOUBLE, 3);
+        roomInventory.put(RoomType.SUITE, 2);
+
+        availableRoomIds.put(RoomType.SINGLE, new Stack<>());
+        availableRoomIds.put(RoomType.DOUBLE, new Stack<>());
+        availableRoomIds.put(RoomType.SUITE, new Stack<>());
+
+        for (int i = 1; i <= 5; i++) availableRoomIds.get(RoomType.SINGLE).push("S" + i);
+        for (int i = 1; i <= 3; i++) availableRoomIds.get(RoomType.DOUBLE).push("D" + i);
+        for (int i = 1; i <= 2; i++) availableRoomIds.get(RoomType.SUITE).push("SU" + i);
+    }
+
+    // Book a room
+    public synchronized void bookRoom(String guestName, RoomType type) throws InvalidBookingException {
+        int available = roomInventory.getOrDefault(type, 0);
+        if (available <= 0) throw new InvalidBookingException("No " + type + " rooms available.");
+
+        String roomId = availableRoomIds.get(type).pop();
+        roomInventory.put(type, available - 1);
+        bookings.add(new Booking(guestName, type, roomId));
+        System.out.println("Booking confirmed: " + guestName + " in " + type + " room " + roomId);
+    }
+
+    // Cancel a booking
+    public synchronized void cancelBooking(String guestName) throws InvalidBookingException {
+        Booking found = null;
+        for (Booking b : bookings) {
+            if (b.guestName.equalsIgnoreCase(guestName)) {
+                found = b;
+                break;
+            }
+        }
+        if (found == null) throw new InvalidBookingException("No booking found for guest: " + guestName);
+
+        roomInventory.put(found.roomType, roomInventory.get(found.roomType) + 1);
+        availableRoomIds.get(found.roomType).push(found.roomId);
+        bookings.remove(found);
+        System.out.println("Booking cancelled for " + guestName + " (" + found.roomType + " room " + found.roomId + ")");
+    }
+
+    public void displayInventory() {
+        System.out.println("Current Room Inventory:");
+        for (Map.Entry<RoomType, Integer> entry : roomInventory.entrySet()) {
+            System.out.println(entry.getKey() + ": " + entry.getValue());
+        }
+    }
+
+    public void displayBookings() {
+        if (bookings.isEmpty()) {
+            System.out.println("No current bookings.");
+            return;
+        }
+        System.out.println("Current Bookings:");
+        for (Booking b : bookings) System.out.println(b);
+    }
+
+    // Save hotel state to file
+    public void saveState(String filename) {
+        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(filename))) {
+            out.writeObject(this);
+            System.out.println("System state saved successfully to " + filename);
+        } catch (IOException e) {
+            System.out.println("Error saving state: " + e.getMessage());
+        }
+    }
+
+    // Load hotel state from file
+    public static Hotel loadState(String filename) {
+        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(filename))) {
+            return (Hotel) in.readObject();
+        } catch (FileNotFoundException e) {
+            System.out.println("Persistence file not found. Starting with default state.");
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("Error loading state: " + e.getMessage());
+        }
+        return new Hotel();
+    }
+}
+
+// Main program
+public class UseCase12DataPersistenceRecovery {
+    private static final String STATE_FILE = "hotel_state.ser";
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        Hotel hotel = Hotel.loadState(STATE_FILE);
+        boolean running = true;
+
+        System.out.println("Welcome to Book My Stay App (Persistent Version)");
+
+        while (running) {
+            System.out.println("\n1. Book Room\n2. Cancel Booking\n3. Show Inventory\n4. Show Bookings\n5. Save & Exit");
+            System.out.print("Select option: ");
+            String choice = scanner.nextLine().trim();
+
+            try {
+                switch (choice) {
+                    case "1":
+                        System.out.print("Enter guest name: ");
+                        String guest = scanner.nextLine().trim();
+                        System.out.print("Enter room type (SINGLE, DOUBLE, SUITE): ");
+                        RoomType type = RoomType.valueOf(scanner.nextLine().trim().toUpperCase());
+                        hotel.bookRoom(guest, type);
+                        break;
+                    case "2":
+                        System.out.print("Enter guest name to cancel: ");
+                        String cancelGuest = scanner.nextLine().trim();
+                        hotel.cancelBooking(cancelGuest);
+                        break;
+                    case "3":
+                        hotel.displayInventory();
+                        break;
+                    case "4":
+                        hotel.displayBookings();
+                        break;
+                    case "5":
+                        hotel.saveState(STATE_FILE);
+                        running = false;
+                        System.out.println("Exiting application. State saved.");
+                        break;
+                    default:
+                        System.out.println("Invalid option. Try again.");
+                }
+            } catch (IllegalArgumentException e) {
+                System.out.println("Error: Invalid room type entered.");
+            } catch (InvalidBookingException e) {
+                System.out.println("Operation failed: " + e.getMessage());
+            }
+        }
+
+        scanner.close();
+    }
 }
